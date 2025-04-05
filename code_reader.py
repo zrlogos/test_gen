@@ -1,7 +1,3 @@
-from typing import Optional, Dict, Union, List
-import os
-from llm_client import LLMChat
-
 class CodeReader:
     def __init__(self, file_path: str):
         self.file_path = file_path
@@ -12,7 +8,7 @@ class CodeReader:
         
 
 if __name__ == "__main__":
-    code_reader = CodeReader("code_analyzer.py")
+    code_reader = CodeReader("")
     code = code_reader.read_code()
     print(code)
 
