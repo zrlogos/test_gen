@@ -1,8 +1,28 @@
-from typing import Optional, Dict
+import re
+from typing import Optional
 from code_reader import CodeReader
 from code_writer import CodeWriter
 from llm_client import LLMChat
-import re
+
+
+def extract_code_blocks(markdown_text: str) -> str:
+    """
+    从 Markdown 文本中提取代码块。
+
+    Args:
+        markdown_text: 包含 Markdown 格式文本的字符串。
+
+    Returns:
+        str: 提取的第一个代码块的内容。如果没有找到代码块，返回空字符串。
+    """
+    # 匹配以 ``` 开头，可选语言标识符，然后是代码，最后以 ``` 结尾的代码块
+    pattern = re.compile(r"```([a-zA-Z]*)?\n(.*?)\n```", re.DOTALL)
+    matches = pattern.findall(markdown_text)
+
+    if matches:
+        # 返回第一个代码块的内容
+        return matches[0][1].strip()
+    return ""
 
 
 class TestGenerator:
@@ -84,7 +104,7 @@ class TestGenerator:
             )
 
             # 提取代码块内容
-            test_code = self.extract_code_blocks(response)
+            test_code = extract_code_blocks(response)
 
             # 写入测试文件
             writer = CodeWriter(output_path)
@@ -98,33 +118,11 @@ class TestGenerator:
             print(f"生成测试代码时出错: {str(e)}")
             return False
 
-    def extract_code_blocks(self, markdown_text: str) -> str:
-        """
-        从 Markdown 文本中提取代码块。
-
-        Args:
-            markdown_text: 包含 Markdown 格式文本的字符串。
-
-        Returns:
-            str: 提取的第一个代码块的内容。如果没有找到代码块，返回空字符串。
-        """
-        # 匹配以 ``` 开头，可选语言标识符，然后是代码，最后以 ``` 结尾的代码块
-        pattern = re.compile(r"```([a-zA-Z]*)?\n(.*?)\n```", re.DOTALL)
-        matches = pattern.findall(markdown_text)
-
-        if matches:
-            # 返回第一个代码块的内容
-            return matches[0][1].strip()
-        return ""
-
-
-# 使用示例
 if __name__ == "__main__":
     # 创建测试生成器
     generator = TestGenerator()
-
     # 为单个文件生成测试
     generator.generate_test(
-        "code_writer.py",
+        "./codes/user_registration.py",
         output_dir="tests"
     )

@@ -8,7 +8,7 @@ class CodeReader:
         
 
 if __name__ == "__main__":
-    code_reader = CodeReader("")
+    code_reader = CodeReader("./codes/user_registration.py")
     code = code_reader.read_code()
     print(code)
 
