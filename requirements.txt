@@ -1,4 +1,6 @@
-pytest~=8.3.5
+pytest>=7.0.0
 pytest-html
-pytest-cov
+pytest-cov>=4.0.0
 openai~=1.70.0
+allure-pytest>=2.13.0
+allure-python-commons>=2.13.0

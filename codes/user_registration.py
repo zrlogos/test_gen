@@ -35,10 +35,3 @@ class UserRegistration:
         # 注册成功，存储用户信息
         self.user_db[username] = password
         return True, "注册成功"
-
-# 示例用法
-if __name__ == "__main__":
-    user_reg = UserRegistration()
-    print(user_reg.register_user("user1", "password123"))  # 注册成功
-    print(user_reg.register_user("user1", "pass"))        # 密码不合法
-    print(user_reg.register_user("user2", ""))            # 用户名为空

@@ -35,7 +35,8 @@ class TestRunner:
             self,
             test_paths: Optional[List[str]] = None,
             allure_report: bool = True,
-            coverage: bool = True
+            coverage: bool = True,
+            serve_report: bool = False
     ) -> int:
         """运行测试用例
 
@@ -43,6 +44,7 @@ class TestRunner:
             test_paths: 指定要运行的测试文件或目录列表，为None时运行test_dir下所有测试
             allure_report: 是否生成Allure格式的测试报告
             coverage: 是否生成覆盖率报告
+            serve_report: 是否在测试完成后直接启动Allure服务器展示报告
 
         Returns:
             int: pytest.main()的返回码，0表示成功
@@ -80,13 +82,18 @@ class TestRunner:
         print(f"运行测试，参数: {pytest_args}")
         exit_code = pytest.main(pytest_args)
         
-        # 生成Allure静态HTML报告
+        # 处理Allure报告
         if allure_report and allure_results_dir:
             if coverage and coverage_dir and coverage_dir.exists():
                 # 将覆盖率报告添加到Allure结果中
                 self._add_coverage_to_allure(allure_results_dir, coverage_dir)
-                
-            self._generate_allure_html(allure_results_dir)
+            
+            if serve_report:
+                # 直接启动Allure服务器展示报告
+                self.serve_allure_report(allure_results_dir)
+            else:
+                # 生成静态HTML报告
+                self._generate_allure_html(allure_results_dir)
             
         return exit_code
     
@@ -185,6 +192,31 @@ class TestRunner:
             print(f"生成Allure报告失败: {e}")
         except FileNotFoundError:
             print("未找到allure命令，请确保已安装Allure命令行工具")
+    
+    def serve_allure_report(self, allure_results_dir: Path) -> None:
+        """启动Allure服务器展示报告
+
+        启动一个Web服务器，实时展示Allure报告。
+        此方法会阻塞当前进程，直到用户手动终止（通常使用Ctrl+C）。
+
+        Args:
+            allure_results_dir: Allure结果目录路径
+        """
+        try:
+            print(f"正在启动Allure服务器，将自动打开浏览器展示报告...")
+            print(f"按Ctrl+C终止服务器")
+            
+            # 运行allure serve命令
+            subprocess.run(
+                ["allure", "serve", str(allure_results_dir)],
+                check=True
+            )
+        except subprocess.CalledProcessError as e:
+            print(f"启动Allure服务器失败: {e}")
+        except FileNotFoundError:
+            print("未找到allure命令，请确保已安装Allure命令行工具")
+        except KeyboardInterrupt:
+            print("\nAllure服务器已终止")
 
 
 # 使用示例
@@ -195,9 +227,14 @@ if __name__ == "__main__":
         report_dir="test_reports"
     )
 
-    exit_code = runner.run_tests()
+    # 运行测试并生成静态HTML报告（默认）
+    # exit_code = runner.run_tests()
+    
+    # 或者运行测试并启动Allure服务器
+    exit_code = runner.run_tests(serve_report=True)
 
     # 打印报告位置
     print(f"\n测试完成，退出码: {exit_code}")
-    print(f"Allure报告位置: {runner.report_dir}/allure-report/index.html")
+    if not runner.run_tests.__defaults__[3]:  # 检查serve_report的默认值
+        print(f"Allure报告位置: {runner.report_dir}/allure-report/index.html")
     print(f"覆盖率报告位置: {runner.report_dir}/coverage/index.html")
