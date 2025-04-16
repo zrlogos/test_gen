@@ -79,7 +79,7 @@ class TestRunner:
 if __name__ == "__main__":
     runner = TestRunner(
         source="codes",
-        test_dir="tests",
+        test_dir="../tests",
         report_dir="test_reports"
     )
 
