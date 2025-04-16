@@ -53,9 +53,14 @@ pipeline {
                         -v \
                         --alluredir=test_reports/allure-results \
                         --cov=codes \
+                        --cov-branch \
                         --cov-report=term-missing \
                         --cov-report=html:test_reports/coverage \
                         --cov-report=xml:test_reports/coverage/coverage.xml \
+                        --cov-report=json:test_reports/coverage/coverage.json \
+                        --cov-report=annotate:test_reports/coverage/annotated \
+                        --durations=10 \
+                        --verbose \
                         --no-summary -q || true
                 '''
 
