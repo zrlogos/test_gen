@@ -60,9 +60,10 @@ class TestRunner:
             source_path = self.source.relative_to(self.project_root)
             pytest_args.extend([
                 f"--cov={source_path}",
+                "--cov-branch",
                 "--cov-report=term-missing",  # 终端输出
                 f"--cov-report=html:{coverage_dir}",  # HTML报告
-                "--cov-report=xml:{coverage_dir}/coverage.xml",  # XML报告（可选）
+                f"--cov-report=xml:{coverage_dir}/coverage.xml",  # XML报告
             ])
 
         # 添加测试路径

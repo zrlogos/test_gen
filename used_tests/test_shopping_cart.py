@@ -1,6 +1,6 @@
 import pytest
 import allure
-from codes.shopping_cart import ShoppingCart
+from used_codes.shopping_cart import ShoppingCart
 
 
 @pytest.fixture

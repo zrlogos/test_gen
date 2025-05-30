@@ -2,7 +2,7 @@ from datetime import datetime
 
 import pytest
 
-from codes.user_registration import UserRegistration
+from used_codes.user_registration import UserRegistration
 
 
 # Fixtures for testing

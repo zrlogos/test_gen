@@ -68,10 +68,12 @@ class TestRunner:
             source_path = self.source.relative_to(self.project_root)
             pytest_args.extend([
                 f"--cov={source_path}",
-                "--cov-report=term-missing",  # 终端输出
-                f"--cov-report=html:{coverage_dir}",  # HTML报告
-                f"--cov-report=xml:{coverage_dir}/coverage.xml",  # XML报告
+                "--cov-branch",  # ✅ 启用分支覆盖率统计
+                "--cov-report=term-missing",  # 终端输出缺失分支信息
+                f"--cov-report=html:{coverage_dir}",  # 生成 HTML 报告
+                f"--cov-report=xml:{coverage_dir}/coverage.xml",  # 生成 XML 报告
             ])
+
 
         # 添加测试路径
         if test_paths:
@@ -87,7 +89,7 @@ class TestRunner:
             if coverage and coverage_dir and coverage_dir.exists():
                 # 将覆盖率报告添加到Allure结果中
                 self._add_coverage_to_allure(allure_results_dir, coverage_dir)
-            
+
             if serve_report:
                 # 直接启动Allure服务器展示报告
                 self.serve_allure_report(allure_results_dir)
@@ -96,7 +98,7 @@ class TestRunner:
                 self._generate_allure_html(allure_results_dir)
             
         return exit_code
-    
+
     def _add_coverage_to_allure(self, allure_results_dir: Path, coverage_dir: Path) -> None:
         """将覆盖率报告添加到Allure结果中
 
@@ -107,29 +109,41 @@ class TestRunner:
         try:
             # 创建环境属性文件，添加覆盖率信息
             try:
-                # 从coverage.xml文件提取覆盖率信息
+                # 从 coverage.xml 文件提取覆盖率信息
                 xml_path = coverage_dir / "coverage.xml"
                 if xml_path.exists():
                     import xml.etree.ElementTree as ET
                     tree = ET.parse(xml_path)
                     root = tree.getroot()
-                    
-                    # 提取总体覆盖率信息
-                    if 'line-rate' in root.attrib:
-                        coverage_percentage = float(root.attrib['line-rate']) * 100
-                        total_lines = int(root.attrib.get('lines-valid', 0))
-                        covered_lines = int(float(root.attrib.get('lines-covered', 0)))
-                        
-                        # 创建环境文件
-                        with open(allure_results_dir / "environment.properties", 'w') as f:
-                            f.write(f"Coverage={coverage_percentage:.2f}%\n")
-                            f.write(f"Total_Lines={total_lines}\n")
-                            f.write(f"Covered_Lines={covered_lines}\n")
-                            
-                        print(f"已添加覆盖率信息到Allure报告：{coverage_percentage:.2f}%")
+
+                    # 提取语句覆盖率信息
+                    coverage_percentage = float(root.attrib.get('line-rate', 0.0)) * 100
+                    total_lines = int(root.attrib.get('lines-valid', 0))
+                    covered_lines = int(root.attrib.get('lines-covered', 0))
+
+                    # 提取分支覆盖率信息
+                    total_branches = int(root.attrib.get('branches-valid', 0))
+                    covered_branches = int(root.attrib.get('branches-covered', 0))
+
+                    branch_coverage_percentage = 0.0
+                    if total_branches > 0:
+                        branch_coverage_percentage = (covered_branches / total_branches) * 100
+
+                    # 创建环境属性文件
+                    with open(allure_results_dir / "environment.properties", 'w') as f:
+                        f.write(f"Coverage={coverage_percentage:.2f}%\n")
+                        f.write(f"Total_Lines={total_lines}\n")
+                        f.write(f"Covered_Lines={covered_lines}\n")
+                        f.write(f"Branch_Coverage={branch_coverage_percentage:.2f}%\n")
+                        f.write(f"Total_Branches={total_branches}\n")
+                        f.write(f"Covered_Branches={covered_branches}\n")
+
+                    print(f"✅ 已添加语句覆盖率到 Allure：{coverage_percentage:.2f}%")
+                    print(f"✅ 已添加分支覆盖率到 Allure：{branch_coverage_percentage:.2f}%")
+
             except Exception as e:
-                print(f"处理覆盖率XML文件时出错: {e}")
-            
+                print(f"❌ 处理覆盖率 XML 文件时出错: {e}")
+
             # 复制覆盖率HTML报告到Allure结果目录
             if coverage_dir.exists() and coverage_dir.is_dir():
                 try:
@@ -153,7 +167,7 @@ class TestRunner:
                         </body>
                         </html>
                         """)
-                    
+
                     # 添加环境摘要信息
                     with open(allure_results_dir / "coverage-attachment.json", 'w') as f:
                         json.dump({
@@ -162,13 +176,13 @@ class TestRunner:
                             "type": "text/html",
                             "size": 0
                         }, f)
-                    
+
                     print("已添加覆盖率HTML报告链接到Allure结果")
                 except Exception as e:
                     print(f"添加覆盖率报告链接时出错: {e}")
         except Exception as e:
             print(f"添加覆盖率报告到Allure结果时出错: {e}")
-    
+
     def _generate_allure_html(self, allure_results_dir: Path) -> None:
         """生成Allure静态HTML报告
 
