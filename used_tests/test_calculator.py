@@ -1,6 +1,6 @@
 import pytest
 import allure
-from codes.calculator import Calculator
+from used_codes.calculator import Calculator
 
 
 @allure.epic("计算器功能测试")
